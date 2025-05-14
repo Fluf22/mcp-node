@@ -57,7 +57,8 @@
    * https://developers.cloudflare.com/workers/wrangler/configuration/#environment-variables
    */
   "vars": {
-    "COOKIE_ENCRYPTION_KEY": "production_value"
+    "COOKIE_ENCRYPTION_KEY": "production_value",
+    "TOKEN": "production_value"
   }
   /**
    * Note: Use secrets to store sensitive data.

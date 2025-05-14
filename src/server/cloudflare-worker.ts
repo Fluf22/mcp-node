@@ -1,7 +1,5 @@
-import OAuthProvider from "@cloudflare/workers-oauth-provider";
 import { McpAgent } from "agents/mcp";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { AlgoliaOAuthHandler } from "./auth-handler.ts";
 import { getToolFilter, isToolAllowed } from "../toolFilters.ts";
 import {
   operationId as GetUserInfoOperationId,
@@ -20,7 +18,6 @@ import {
   MonitoringSpec,
   QuerySuggestionsSpec,
   RecommendSpec,
-  // SearchSpec,
   UsageSpec,
 } from "../openApi.ts";
 import {
@@ -212,16 +209,28 @@ export class AlgoliaMCP extends McpAgent<Env, never, Props> {
   }
 }
 
-export default new OAuthProvider({
-  apiHandlers: {
-    "/sse": AlgoliaMCP.serveSSE("/sse") as never,
-    "/mcp": AlgoliaMCP.serve("/mcp") as never,
+export default {
+  fetch(request: Request, env: Env, ctx: ExecutionContext) {
+    const url = new URL(request.url);
+
+    if (
+      !(url.searchParams.has("token") && url.searchParams.get("token") === env.TOKEN) &&
+      !(
+        request.headers.has("Authorization") &&
+        request.headers.get("Authorization") === `Bearer ${env.TOKEN}`
+      )
+    ) {
+      return new Response("Unauthorized", { status: 401 });
+    }
+
+    if (url.pathname === "/sse" || url.pathname === "/sse/message") {
+      return AlgoliaMCP.serveSSE("/sse").fetch(request, env, ctx);
+    }
+
+    if (url.pathname === "/mcp") {
+      return AlgoliaMCP.serve("/mcp").fetch(request, env, ctx);
+    }
+
+    return new Response("Not found", { status: 404 });
   },
-  defaultHandler: AlgoliaOAuthHandler as never,
-  authorizeEndpoint: "/authorize",
-  tokenEndpoint: "/token",
-  clientRegistrationEndpoint: "/register",
-  onError: (error) => {
-    console.error("Error in OAuth Provider:", error);
-  },
-});
+};
