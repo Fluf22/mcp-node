@@ -4,7 +4,7 @@
  */
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "algolia-mcp-on-cloudflare",
+  "name": "algolia-mcp-authless",
   "main": "src/server/cloudflare-worker.ts",
   "compatibility_date": "2025-03-10",
   "compatibility_flags": [
